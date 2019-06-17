@@ -19,6 +19,21 @@ class Player:
 # this final if statement sets the barriers or the walls the players can't move through 
         if (potential_x +self.ship_side) < 800 and potential_x > 0:
             player_pos[0] = potential_x
+
+    def check_hit(self, position, player_current, spaceship, explosion, aliens, ship_side, alien_side):
+        player_x = position[0]
+        player_y = position[1]
+
+        for alien in aliens:
+            pos = alien[1]
+            alien_x = pos[0]
+            alien_y = pos[1]
+
+            if (player_y <=(alien_y + alien_side)) and (player_y >= alien_y):
+                if (player_x >= (alien_x - ship_side)) and (player_x <= (alien_x + alien_side)):
+                    player_current = explosion
+                    
+        return player_current
 #this assigns the spawn point of the bullet
     def create_bullet (self, position, ship_side, bullet_side, bullets):
         x = (position[0] + (ship_side/2)) - (bullet_side/2)
