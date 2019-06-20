@@ -1,11 +1,10 @@
-# Documents
+python >=3.7.2
+	"https://www.python.org/downloads/"
 
-Use this folder to store all your documents that are not in the wiki
+pip >=19.0.3
+	When installing Python choose custom install and select install pip
+		OR
+	CMD "python -m pip install --upgrade pip"
 
-As you add documents edit this README.md file so that it lists and describes the documents you have stored here.
-
-* document 1
-  * description
-  
-* document 2
-  * descriptipon
+pygame >=1.9.4
+	CMD "python -m pip install pygame"
