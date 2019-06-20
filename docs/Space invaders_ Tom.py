@@ -2,13 +2,16 @@ __copyright__ = "(c) Thomas Rampton 2019"
 __license__ = "Creative Commons Attribution-ShareAlike 2.0 Generic License."
 __author__ = "Tom"
 __version__ = "1.0"
-#importing pygame, and the ability for asteroids to spawn random
+#importing pygame, and the ability for asteroids to spawn random, time, and other modules 
 import pygame as p
+import time
 import random
 from PlayerMovement_Tom import Player
 from Button_Tom import Button
 from Message_Tom import Message
 from Enemy_Tom import Enemy 
+from Typing_Tom import Typing
+from Scores_Tom import Scores
 
 #used to send and recieve between modules 
 player = Player()
@@ -18,9 +21,9 @@ enemy = Enemy()
 p.init()
 
 #sounds imported
-p.mixer.music.load("Big_Explosion_Cut_Off.wav")
+p.mixer.music.load("The_Nexus_Riddim.wav")
 shoot_sound = p.mixer.Sound("shooting.wav")
-explosion_sound = p.mixer.Sound("The_Nexus_Riddim.wav")
+explosion_sound = p.mixer.Sound("Big_Explosion_Cut_Off.wav")
 
 
 #creates the variable of clock
@@ -35,6 +38,11 @@ gamedisplay = p.display.set_mode((width_display, height_display))
 
 #creates the title for your game
 p.display.set_caption("Space Invaders")
+'''
+#creates a icon for the game
+gameico = p.image.load("spaceship")
+p.display.set_icon(gameico)
+'''
 
 #the background image loaded and transformed
 Galaxy = p.image.load("space background.jpg")
@@ -49,6 +57,7 @@ black = (0, 0, 0)
 orange = (255,165,0)
 green =  (0,0,200)
 
+#sets pause to false 
 pause = False
 
 #function for The starting menu screen
@@ -83,7 +92,8 @@ def menu_screen():
                     if btn.click(position):
 # if clicked in play, then will go to the main function and play the game 
                         if btn.text == "Play":
-                           main()
+                           name = nameing()
+                           main(name)
 # if clicked in quit, then will quit 
                         elif btn.text == "Quit":
                             quit_game()
@@ -144,45 +154,168 @@ def instructions():
         clock.tick(60)
         p.display.update()
 
-def death():
-    p.mixer.music.pause()
-    died = True
-    while died:
-        death_buttons = [Button("Retry", 125, 280, 200, 100, orange, 60),
-                         Button("Quit", 535, 280, 150, 100, red, 60)]
-        title = Message ("GAMEOVER!!", 400, 140, white, 100)
+#this handels the naming inputs 
+def nameing():
+    #sets word to nothing
+    word = ""
+    #then question whats your name
+    question = "whats your name?"
 
+    #displays the question using the Message class
+    message = Message(question, 400, 267, white, 60)
+
+    #creates the ability to quit
+    run = True
+    while run:
+        for event in p.event.get():
+            if event.type == p.QUIT:
+                quit_game()
+            #passes through the required variables from typing class
+            wording = Typing(word)
+            #calls the letters function and returns a word
+            word = wording.letters()
+        #gets all of the keys that were pressed and if return is then passes through the word 
+        keys = p.key.get_pressed()
+        if keys[p.K_RETURN]:
+            return word
+
+        #displayes the background 
+        gamedisplay.blit(Galaxy, (0, 0))
+
+        #sets name to the returned word and displays it 
+        name = Message(word, 400, 400, white, 60)
+
+        #draws the name to the gamedisplay, then the title to the screen
+        name.draw(gamedisplay)
+        message.draw(gamedisplay)
+
+        #sets the clock speed to 60, and updates the screen
+        clock.tick(60)
+        p.display.update()
+
+#this handels the inputs of scoring 
+def scoring (player_name, player_score):
+
+    #pauses the music  
+    p.mixer.music.pause()
+    # creates the array for player_list
+    player_list = []
+
+    #opens the text file 
+    text_file = open("Scores.txt", "r")
+    #sets up the score class 
+    scoring = Scores(player_list, text_file)
+
+    #gets the content from the file 
+    player_list = scoring.read_scores()
+    #updates the scores and names with the current
+    player_list = scoring.update_scores(player_name, player_score)
+
+    #closes the file 
+    text_file.close()
+    #opens the file to write and erase the previous scores 
+    text_file = open("Scores.txt", "w+")
+    #updates the scors in the file 
+    scoring.write_scores(text_file)
+    #closes the file 
+    text_file.close()
+
+    #sets run to true  
+    run =  True
+    while run:
+        #displays the buttons and messages for the high score page
+        buttons = [Button("Retry", 125, 460, 200, 100, green, 60),
+                   Button("Quit", 535, 460, 150, 100, red, 60)]
+        messages = [Message("Name", 267, 60, white, 60),
+                    Message("Score", 533, 60, white, 60)]
+
+        #sets up the ability to quit and use the buttons displayed 
         for event in p.event.get():
             if event.type == p.QUIT:
                 quit_game()
             if event.type == p.MOUSEBUTTONDOWN:
                 pos = p.mouse.get_pos()
-                for btn in death_buttons:
-                    if btn.click(pos):
-                        if btn.text == "Retry":
-                            main()
-                        elif btn.text == "Quit":
+                for btn in buttons:
+                   if btn.click(pos):
+                       if btn.text == "Retry":
+                            name = nameing()
+                            main(name)
+                       elif btn.text == "Quit":
                             quit_game()
 
-        for btn in death_buttons:
-            btn.draw(gamedisplay)
-        title.draw(gamedisplay)
+        #sets the variables for the positions they will be using
+        x_score = 350
+        x_name = 450
+        y = 150
 
+        #bilts the background 
+        gamedisplay.blit(Galaxy, (0, 0))
+
+        #gets each place and assigns a num
+        for place in range(len(player_list)):
+            #sets name to its index value
+            name = player_list[place][0]
+            #sets score to its index value
+            score = player_list[place][1]
+
+            #sets up the font
+            text_font = p.font.SysFont("comicsansms", 60)
+            #renders the text
+            text_surface = text_font.render(name, True, white)
+            #gets the rect from the surface 
+            text_rect = text_surface.get_rect()
+            #updates the midleft of the text
+            text_rect.midleft = (x_name, y)
+            #blits all to the display
+            gamedisplay.blit(text_surface, text_rect)
+
+            #sets up the font
+            text_font = p.font.SysFont("comicsansms", 60)
+            #renders the text
+            text_surface = text_font.render(score, True, white)
+            #gets the rect from the surface 
+            text_rect = text_surface.get_rect()
+            #updates the midleft of the text
+            text_rect.midright = (x_score, y)
+            #blits the text and rect to the display
+            gamedisplay.blit(text_surface, text_rect)
+            
+            #sets y to y+60
+            y = (y + 60)
+
+        #draws the table lines 
+        p.draw.line(gamedisplay, white, (400, 40), (400, 440), 5)
+        p.draw.line(gamedisplay, white, (100, 100), (700, 100), 5)
+
+        #draws the buttons and messages 
+        for btn in buttons:
+            btn.draw(gamedisplay)
+        for msg in messages:
+            msg.draw(gamedisplay)
+
+        #sets the clock speed and updates the display
         clock.tick(60)
         p.display.update()
 
+
 def unpause():
+    #globals pause
     global pause
+    #pauses music 
     p.mixer.music.unpause()
+    #sets pause to false
     pause = False
 
 def paused():
+    #pauses music
     p.mixer.music.pause()
     while pause:
+        #displays the buttons and messages 
         pause_buttons = [Button("Back", 215, 280, 150, 100, green, 60),
                          Button("Quit", 535, 280, 150, 100, red, 60)]
         title = Message("Paused", 400, 140, white, 100)
 
+        #sets up the ability to quit and use the buttons 
         for event in p.event.get():
             if event.type == p.QUIT:
                 quit_game()
@@ -195,31 +328,38 @@ def paused():
                         elif btn.text == "Quit":
                             quit_game()
 
+        #draws the title and buttons 
         for btn in pause_buttons:
             btn.draw(gamedisplay)
         title.draw(gamedisplay)
 
+        #sets up the clock speed and updates the display
         clock.tick(60)
         p.display.update()
         
     
 #creates a function to display your images in the appropriate spot 
-def display_update(bullets, pos, aliens, millenniumfalcon, kill_count, bullet_img):
-    
-    gamedisplay.blit (Galaxy, (0, 0))
-    gamedisplay.blit (millenniumfalcon, pos)
+def display_update(bullets, player_pos, aliens, player_current, kill_count, bullet_img):
 
+    #blits the background and the player
+    gamedisplay.blit (Galaxy, (0, 0))
+    gamedisplay.blit (player_current, player_pos)
+
+    #blits the bullets 
     for bullet in bullets:
         gamedisplay.blit(bullet_img, (bullet[0], bullet[1]))
-        
+
+    #seperates the img from alien, pos from alien, x from pos, and y from pos     
     for alien in aliens:
         img = alien[0]
         pos = alien[1]
         x = pos[0]
         y = pos[1]
+        #blits the img and coords of the alien
         gamedisplay.blit(img, (x, y))
-
+    #creates the score in the top right of the screen
     score_message = [Message("Score:", 650, 40, white, 40), Message(kill_count, 750, 40, white, 40)] 
+
     for message in score_message:
         message.draw(gamedisplay)
 
@@ -229,14 +369,14 @@ def quit_game():
     quit()
 
 # this is the main function
-def main():
+def main(name):
 
     global pause
 
     p.mixer.music.play(-1)
     
 #variables used in the function
-    ship_side = 60
+    ship_side = 50
     spaceship_Y = 500
     pos = [(width_display/2)-(ship_side)/2,spaceship_Y]
     bullet_side = 15
@@ -272,18 +412,28 @@ def main():
     bullets =[]
     aliens =[]
 
-#reads for any button pressing or actions 
-    game_exit = False
-    while not game_exit:
+#sets up the ability to quit
+    run = True
+    while run :
         for event in p.event.get():
-            if event.type == p.QUIT:
-                quit_game()
-
+            if event == p.QUIT:
+                quit_game
+        #plays the explosion sound if player_current = explosion
         if player_current == explosion:
             p.mixer.Sound.play(explosion_sound)
-            death()
-
+            time.sleep(2)
+            scoring(name, kill_count)
+        #if the score is below 0 then end the round and display the high scores 
+        elif kill_count < 0:
+            kill_count = 0
+            time.sleep(2)
+            scoring(name, kill_count)
+        #sets direction to =0
         direction = 0
+
+        #sets player_current to equal the player
+        player_current = millenniumfalcon
+            
 
 #giving an instruction for when a button is pressed 
         keys = p.key.get_pressed()
@@ -308,22 +458,21 @@ def main():
 
         player.update_bullet(bullets)
 
-
+        #when the alien delay gets to 50 or greater then the dealy is setr to 0
         if alien_delay >= 50:
             aliens = enemy.alien_spawn(aliens, alien_imgs)
             alien_delay = 0
+        #updates the alien position and returns a new alien list
         aliens, kill_count = enemy.alien_movement(aliens, kill_count)
 
+        #checks if player has been hit by an alien and returns the players current img
         player_current = player.check_hit(pos, player_current, millenniumfalcon, explosion, aliens, ship_side, alien_side)
-        
+
+        #checks if the bullet hits the alien and returns the bullet and aliens lists also kill count 
         bullets, aliens, kill_count = enemy.check_hit(bullets, aliens, alien_imgs, kill_count)
 
-        if kill_count < 0:
-            kill_count = 0
-            death()
-
 #updates the display and events that have occured
-        display_update(bullets, pos, aliens, millenniumfalcon, kill_count, bullet_img)
+        display_update(bullets, pos, aliens, player_current, kill_count, bullet_img)
         clock.tick(60)
         p.display.update()
 #just checking to see if main is main 
