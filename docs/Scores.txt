@@ -1,0 +1,10 @@
+tom
+200
+daniel
+150
+matt
+100
+bailey
+50
+zane
+0
